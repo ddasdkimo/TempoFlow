@@ -52,7 +52,9 @@ class WebAudioEngine implements AudioEngine {
     for (final path in [type.assetPath, type.accentAssetPath]) {
       if (_buffers.containsKey(path)) continue;
       try {
-        final response = await web.window.fetch(path.toJS).toDart;
+        // Flutter web serves assets under 'assets/' prefix
+        final fetchPath = 'assets/$path';
+        final response = await web.window.fetch(fetchPath.toJS).toDart;
         final arrayBuffer = await response.arrayBuffer().toDart;
         final audioBuffer = await ctx.decodeAudioData(arrayBuffer).toDart;
         _buffers[path] = audioBuffer;
