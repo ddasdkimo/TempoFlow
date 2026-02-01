@@ -15,28 +15,11 @@ class _UsageStatsScreenState extends ConsumerState<UsageStatsScreen> {
   @override
   Widget build(BuildContext context) {
     final repository = ref.watch(usageRepositoryProvider);
+    final service = ref.watch(usageTrackingServiceProvider);
     final asyncState = ref.watch(usageTrackingStateProvider);
+    final state = asyncState.valueOrNull ?? service.state;
 
-    return asyncState.when(
-      loading: () => Scaffold(
-        appBar: AppBar(
-          title: const Text('使用統計'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, _) => Scaffold(
-        appBar: AppBar(
-          title: const Text('使用統計'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: Center(
-          child: Text('載入失敗: $err', style: const TextStyle(color: Colors.white70)),
-        ),
-      ),
-      data: (state) {
+    {
         final activeUser = state.activeUser;
         if (activeUser == null) {
           return Scaffold(
@@ -196,13 +179,12 @@ class _UsageStatsScreenState extends ConsumerState<UsageStatsScreen> {
                   ],
                 ),
         );
-      },
-    );
+    }
   }
 
   Future<void> _exportJson(BuildContext context, dynamic repository) async {
     try {
-      final json = await repository.exportJson();
+      final json = repository.exportJson();
       if (!context.mounted) return;
 
       await Clipboard.setData(ClipboardData(text: json));

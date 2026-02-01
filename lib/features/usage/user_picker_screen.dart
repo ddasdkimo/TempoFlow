@@ -28,12 +28,9 @@ class _UserPickerScreenState extends ConsumerState<UserPickerScreen> {
         backgroundColor: const Color(0xFFFF6B35),
         child: const Icon(Icons.person_add, color: Colors.white),
       ),
-      body: asyncState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(
-          child: Text('載入失敗: $err', style: const TextStyle(color: Colors.white70)),
-        ),
-        data: (state) {
+      body: Builder(
+        builder: (context) {
+          final state = asyncState.valueOrNull ?? service.state;
           final users = state.users;
           final activeUserId = state.activeUser?.id;
 

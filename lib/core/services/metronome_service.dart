@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
+
 import '../audio/audio_engine.dart';
 import '../audio/audio_engine_factory.dart';
 import '../models/metronome_state.dart';
@@ -43,6 +45,15 @@ class MetronomeService {
       currentSubBeat: event.subBeat,
     );
     _stateController.add(_state);
+
+    // Haptic feedback on main beats when vibration is enabled
+    if (_state.vibrationEnabled && event.subBeat == 0) {
+      if (event.type == BeatType.accent) {
+        HapticFeedback.heavyImpact();
+      } else {
+        HapticFeedback.mediumImpact();
+      }
+    }
 
     // Track bar completion
     if (event.subBeat == 0 && event.beat == 0 && _barBeatCount > 0) {
