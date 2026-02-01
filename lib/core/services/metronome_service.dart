@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import '../audio/audio_engine.dart';
-import '../audio/web_audio_engine.dart';
-import '../audio/native_audio_engine.dart';
+import '../audio/audio_engine_factory.dart';
 import '../models/metronome_state.dart';
 import '../models/sound_type.dart';
 import '../models/time_signature.dart';
@@ -22,7 +19,7 @@ class MetronomeService {
   void Function()? onBarComplete;
 
   MetronomeService() {
-    _engine = kIsWeb ? WebAudioEngine() : NativeAudioEngine();
+    _engine = createPlatformAudioEngine();
   }
 
   MetronomeState get state => _state;
