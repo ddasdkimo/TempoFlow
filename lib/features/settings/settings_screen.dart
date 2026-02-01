@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/providers/providers.dart';
 import '../../core/models/sound_type.dart';
@@ -88,6 +89,27 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: const Text('Web 平台不支援'),
               value: state.vibrationEnabled,
               onChanged: (v) => service.setVibration(v),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Contact
+          const _SectionHeader('關於'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.mail_outline, color: Color(0xFFFF6B35)),
+              title: const Text('聯絡我'),
+              subtitle: const Text('mr.alex.mercer.s@gmail.com'),
+              trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+              onTap: () async {
+                final uri = Uri(
+                  scheme: 'mailto',
+                  path: 'mr.alex.mercer.s@gmail.com',
+                  queryParameters: {'subject': 'TempoFlow 意見回饋'},
+                );
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                }
+              },
             ),
           ),
         ],
