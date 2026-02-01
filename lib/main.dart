@@ -16,6 +16,9 @@ void main() async {
   final presetService = container.read(presetServiceProvider);
   await presetService.load();
 
+  final usageService = container.read(usageTrackingServiceProvider);
+  await usageService.initialize();
+
   runApp(
     UncontrolledProviderScope(
       container: container,

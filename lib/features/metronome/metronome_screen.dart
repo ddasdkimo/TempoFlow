@@ -6,6 +6,8 @@ import '../../features/presets/preset_screen.dart';
 import '../../features/trainer/trainer_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/stage/stage_mode_screen.dart';
+import '../../features/usage/user_avatar_chip.dart';
+import '../../features/usage/usage_stats_screen.dart';
 import 'widgets/bpm_control.dart';
 import 'widgets/beat_indicator.dart';
 import 'widgets/time_signature_picker.dart';
@@ -33,6 +35,11 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 8),
+          child: Center(child: UserAvatarChip()),
+        ),
+        leadingWidth: 140,
         actions: [
           IconButton(
             icon: const Icon(Icons.fullscreen),
@@ -53,6 +60,10 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const TrainerScreen()));
                   break;
+                case 'usage':
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const UsageStatsScreen()));
+                  break;
                 case 'settings':
                   Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const SettingsScreen()));
@@ -62,6 +73,7 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
             itemBuilder: (_) => [
               const PopupMenuItem(value: 'presets', child: Text('Presets')),
               const PopupMenuItem(value: 'trainer', child: Text('加速訓練')),
+              const PopupMenuItem(value: 'usage', child: Text('使用統計')),
               const PopupMenuItem(value: 'settings', child: Text('設定')),
             ],
           ),
