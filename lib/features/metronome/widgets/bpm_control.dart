@@ -13,55 +13,63 @@ class BpmControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // BPM display
-        GestureDetector(
-          onTap: () => _showBpmInput(context),
-          child: Text(
-            '$bpm',
-            style: Theme.of(context).textTheme.displayLarge,
-          ),
-        ),
-        Text(
-          'BPM',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 24),
-        // Slider
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 4,
-            ),
-            child: Slider(
-              value: bpm.toDouble(),
-              min: 20,
-              max: 300,
-              onChanged: (v) => onBpmChanged(v.round()),
-            ),
-          ),
-        ),
-        // +/- buttons
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 200;
+        return Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _BpmAdjustButton(
-              icon: Icons.remove,
-              onTap: () => onBpmChanged((bpm - 1).clamp(20, 300)),
-              onLongPress: () => onBpmChanged((bpm - 5).clamp(20, 300)),
+            // BPM display
+            GestureDetector(
+              onTap: () => _showBpmInput(context),
+              child: Text(
+                '$bpm',
+                style: compact
+                    ? Theme.of(context).textTheme.headlineLarge
+                    : Theme.of(context).textTheme.displayLarge,
+              ),
             ),
-            const SizedBox(width: 48),
-            _BpmAdjustButton(
-              icon: Icons.add,
-              onTap: () => onBpmChanged((bpm + 1).clamp(20, 300)),
-              onLongPress: () => onBpmChanged((bpm + 5).clamp(20, 300)),
+            Text(
+              'BPM',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: compact ? 8 : 24),
+            // Slider
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                ),
+                child: Slider(
+                  value: bpm.toDouble(),
+                  min: 20,
+                  max: 300,
+                  onChanged: (v) => onBpmChanged(v.round()),
+                ),
+              ),
+            ),
+            // +/- buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _BpmAdjustButton(
+                  icon: Icons.remove,
+                  onTap: () => onBpmChanged((bpm - 1).clamp(20, 300)),
+                  onLongPress: () => onBpmChanged((bpm - 5).clamp(20, 300)),
+                ),
+                const SizedBox(width: 48),
+                _BpmAdjustButton(
+                  icon: Icons.add,
+                  onTap: () => onBpmChanged((bpm + 1).clamp(20, 300)),
+                  onLongPress: () => onBpmChanged((bpm + 5).clamp(20, 300)),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 

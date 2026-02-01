@@ -68,79 +68,98 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            // Beat indicator
-            BeatIndicator(
-              beatsPerBar: state.timeSignature.beatsPerBar,
-              currentBeat: state.currentBeat,
-              isPlaying: state.isPlaying,
-              accentPattern: state.accentPattern,
-            ),
-            const SizedBox(height: 24),
-            // BPM Control
-            Expanded(
-              child: BpmControl(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final content = [
+              const SizedBox(height: 16),
+              // Beat indicator
+              BeatIndicator(
+                beatsPerBar: state.timeSignature.beatsPerBar,
+                currentBeat: state.currentBeat,
+                isPlaying: state.isPlaying,
+                accentPattern: state.accentPattern,
+              ),
+              const SizedBox(height: 24),
+              // BPM Control
+              BpmControl(
                 bpm: state.bpm,
                 onBpmChanged: (bpm) => service.setBpm(bpm),
               ),
-            ),
-            // Time signature & subdivision row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TimeSignaturePicker(
-                      timeSignature: state.timeSignature,
-                      onChanged: (ts) => service.setTimeSignature(ts),
+              const SizedBox(height: 16),
+              // Time signature & subdivision row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TimeSignaturePicker(
+                        timeSignature: state.timeSignature,
+                        onChanged: (ts) => service.setTimeSignature(ts),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: SubdivisionSelector(
-                      subdivision: state.subdivision,
-                      onChanged: (s) => service.setSubdivision(s),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: SubdivisionSelector(
+                        subdivision: state.subdivision,
+                        onChanged: (s) => service.setSubdivision(s),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            // Accent editor
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: AccentEditor(
-                accentPattern: state.accentPattern,
-                accentEnabled: state.accentEnabled,
-                onEnabledChanged: (e) => service.setAccentEnabled(e),
-                onWeightChanged: (beat, weight) =>
-                    service.setAccentWeight(beat, weight),
+              const SizedBox(height: 16),
+              // Accent editor
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: AccentEditor(
+                  accentPattern: state.accentPattern,
+                  accentEnabled: state.accentEnabled,
+                  onEnabledChanged: (e) => service.setAccentEnabled(e),
+                  onWeightChanged: (beat, weight) =>
+                      service.setAccentWeight(beat, weight),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            // Play/Stop button and Tap Tempo
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TapTempoButton(
-                    onBpmDetected: (bpm) => service.setBpm(bpm),
-                  ),
-                  const SizedBox(width: 24),
-                  _PlayButton(
-                    isPlaying: state.isPlaying,
-                    onPressed: () => service.togglePlayback(),
-                  ),
-                  const SizedBox(width: 24),
-                  const SizedBox(width: 64), // balance
-                ],
+              const SizedBox(height: 24),
+              // Play/Stop button and Tap Tempo
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TapTempoButton(
+                      onBpmDetected: (bpm) => service.setBpm(bpm),
+                    ),
+                    const SizedBox(width: 24),
+                    _PlayButton(
+                      isPlaying: state.isPlaying,
+                      onPressed: () => service.togglePlayback(),
+                    ),
+                    const SizedBox(width: 24),
+                    const SizedBox(width: 64), // balance
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 32),
+            ];
+
+            // Use scrollable layout when space is tight (landscape)
+            if (constraints.maxHeight < 500) {
+              return SingleChildScrollView(
+                child: Column(children: content),
+              );
+            }
+
+            // Normal portrait: let BPM control expand
+            return Column(
+              children: [
+                content[0], // SizedBox(16)
+                content[1], // BeatIndicator
+                content[2], // SizedBox(24)
+                Expanded(child: content[3]), // BpmControl
+                ...content.skip(4),
+              ],
+            );
+          },
         ),
       ),
     );
