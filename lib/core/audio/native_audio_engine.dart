@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -7,7 +8,7 @@ import '../models/sound_type.dart';
 import 'audio_engine.dart';
 
 /// Native audio engine using platform MethodChannel.
-/// Falls back to a Dart-based timer scheduler when native plugin is unavailable.
+/// Falls back to a Dart-based timer scheduler with audioplayers when native plugin is unavailable.
 class NativeAudioEngine implements AudioEngine {
   static const _channel = MethodChannel('com.tempoflow/audio_engine');
   final _beatController = StreamController<BeatEvent>.broadcast();
@@ -24,6 +25,15 @@ class NativeAudioEngine implements AudioEngine {
   int _currentBeat = 0;
   int _currentSubBeat = 0;
   List<double> _accentPattern = [1.0, 0.7, 0.7, 0.7];
+
+  // Audio players pool for fallback mode
+  SoundType _soundType = SoundType.click;
+  double _masterVolume = 0.8;
+  double _accentVolume = 1.0;
+  double _subdivisionVolume = 0.5;
+  final List<AudioPlayer> _playerPool = [];
+  int _playerIndex = 0;
+  static const _poolSize = 4;
 
   NativeAudioEngine() {
     _channel.setMethodCallHandler(_handlePlatformCall);
@@ -49,8 +59,14 @@ class NativeAudioEngine implements AudioEngine {
       await _channel.invokeMethod('initialize');
       _hasNativePlugin = true;
     } on MissingPluginException {
-      debugPrint('Native audio plugin not available, using Dart fallback scheduler');
+      debugPrint('Native audio plugin not available, using audioplayers fallback');
       _hasNativePlugin = false;
+      // Create player pool for low-latency playback
+      for (var i = 0; i < _poolSize; i++) {
+        final player = AudioPlayer();
+        await player.setPlayerMode(PlayerMode.lowLatency);
+        _playerPool.add(player);
+      }
     }
   }
 
@@ -64,11 +80,16 @@ class NativeAudioEngine implements AudioEngine {
         // ignore
       }
     }
+    for (final player in _playerPool) {
+      await player.dispose();
+    }
+    _playerPool.clear();
     await _beatController.close();
   }
 
   @override
   Future<void> loadSound(SoundType type) async {
+    _soundType = type;
     if (!_hasNativePlugin) return;
     try {
       await _channel.invokeMethod('loadSound', {
@@ -95,6 +116,10 @@ class NativeAudioEngine implements AudioEngine {
     _beatsPerBar = beatsPerBar;
     _subdivision = subdivision;
     _accentPattern = accentPattern;
+    _soundType = soundType;
+    _masterVolume = masterVolume;
+    _accentVolume = accentVolume;
+    _subdivisionVolume = subdivisionVolume;
     _isPlaying = true;
 
     if (_hasNativePlugin) {
@@ -149,14 +174,30 @@ class NativeAudioEngine implements AudioEngine {
           _currentBeat < _accentPattern.length &&
           _accentPattern[_currentBeat] >= 0.9;
 
+      final beatType = isAccent
+          ? BeatType.accent
+          : isMainBeat
+              ? BeatType.normal
+              : BeatType.subdivision;
+
+      // Play sound
+      if (_playerPool.isNotEmpty) {
+        final assetPath = isAccent
+            ? _soundType.accentAssetPath
+            : _soundType.assetPath;
+        final volume = isMainBeat
+            ? (isAccent ? _masterVolume * _accentVolume : _masterVolume * (_currentBeat < _accentPattern.length ? _accentPattern[_currentBeat] : 0.7))
+            : _masterVolume * _subdivisionVolume;
+        final player = _playerPool[_playerIndex % _poolSize];
+        _playerIndex++;
+        player.setVolume(volume.clamp(0.0, 1.0));
+        player.play(AssetSource(assetPath.replaceFirst('assets/', '')));
+      }
+
       _beatController.add(BeatEvent(
         beat: _currentBeat,
         subBeat: _currentSubBeat,
-        type: isAccent
-            ? BeatType.accent
-            : isMainBeat
-                ? BeatType.normal
-                : BeatType.subdivision,
+        type: beatType,
         scheduledTime: _nextNoteTime,
       ));
 
@@ -184,6 +225,9 @@ class NativeAudioEngine implements AudioEngine {
 
   @override
   void updateVolume({double? master, double? accent, double? subdivision}) {
+    if (master != null) _masterVolume = master;
+    if (accent != null) _accentVolume = accent;
+    if (subdivision != null) _subdivisionVolume = subdivision;
     if (_hasNativePlugin) {
       _channel.invokeMethod('updateVolume', {
         if (master != null) 'master': master,
@@ -210,6 +254,7 @@ class NativeAudioEngine implements AudioEngine {
 
   @override
   void updateSound(SoundType type) {
+    _soundType = type;
     if (_hasNativePlugin) {
       _channel.invokeMethod('updateSound', {
         'normal': type.assetPath,
