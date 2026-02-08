@@ -289,7 +289,10 @@ class _MidiPracticeTab extends ConsumerWidget {
         // Currently playing indicator
         if (state.isPlaying && state.currentSession != null) ...[
           const SizedBox(height: 12),
-          _LiveSessionCard(startAt: state.currentSession!.startAt),
+          _LiveSessionCard(
+            startAt: state.currentSession!.startAt,
+            totalPreviousSeconds: totalSeconds,
+          ),
         ],
         const SizedBox(height: 16),
         // Export button
@@ -529,7 +532,11 @@ class _MidiNoUserTab extends ConsumerWidget {
 
 class _LiveSessionCard extends StatefulWidget {
   final DateTime startAt;
-  const _LiveSessionCard({required this.startAt});
+  final int totalPreviousSeconds;
+  const _LiveSessionCard({
+    required this.startAt,
+    required this.totalPreviousSeconds,
+  });
 
   @override
   State<_LiveSessionCard> createState() => _LiveSessionCardState();
@@ -552,13 +559,10 @@ class _LiveSessionCardState extends State<_LiveSessionCard> {
     super.dispose();
   }
 
-  String _formatElapsed(DateTime startAt) {
-    final elapsed = DateTime.now().difference(startAt);
-    final h = elapsed.inHours;
-    final m = elapsed.inMinutes.remainder(60);
-    final s = elapsed.inSeconds.remainder(60);
-    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    return '$m:${s.toString().padLeft(2, '0')}';
+  String _formatTotal() {
+    final currentSessionSec = DateTime.now().difference(widget.startAt).inSeconds;
+    final total = widget.totalPreviousSeconds + currentSessionSec;
+    return _formatDuration(total);
   }
 
   @override
@@ -589,7 +593,7 @@ class _LiveSessionCardState extends State<_LiveSessionCard> {
             ),
             const SizedBox(width: 12),
             Text(
-              '練習中 — ${_formatElapsed(widget.startAt)}',
+              '練習中 — 總計 ${_formatTotal()}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF7C4DFF),
