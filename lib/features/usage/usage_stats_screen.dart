@@ -6,7 +6,8 @@ import '../../core/midi/midi_service.dart';
 import '../../core/providers/providers.dart';
 
 class UsageStatsScreen extends ConsumerStatefulWidget {
-  const UsageStatsScreen({super.key});
+  final int initialTab;
+  const UsageStatsScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<UsageStatsScreen> createState() => _UsageStatsScreenState();
@@ -19,7 +20,11 @@ class _UsageStatsScreenState extends ConsumerState<UsageStatsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab,
+    );
   }
 
   @override
