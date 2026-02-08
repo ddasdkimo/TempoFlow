@@ -86,7 +86,7 @@ class PracticeTrackingService {
   StreamSubscription<MidiNoteEvent>? _noteSub;
   Timer? _idleTimer;
 
-  static const _idleTimeoutSeconds = 10;
+  static const _idleTimeoutSeconds = 5;
   static const _minSessionSeconds = 5;
 
   PracticeTrackingService(
