@@ -40,6 +40,15 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
     final practiceState = practiceAsync.valueOrNull ?? practiceService.state;
     _handleMidiSnackbar(context, practiceState.connectionState);
 
+    // Total practice seconds for chip display
+    final practiceRepo = ref.watch(practiceRepositoryProvider);
+    final usageState = ref.watch(usageTrackingStateProvider).valueOrNull ??
+        ref.watch(usageTrackingServiceProvider).state;
+    final activeUserId = usageState.activeUser?.id;
+    final totalPracticeSeconds = activeUserId != null
+        ? practiceRepo.totalSecondsForUser(activeUserId)
+        : 0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('TempoFlow'),
@@ -197,6 +206,7 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
                 isPlaying: practiceState.isPlaying,
                 devices: practiceState.connectedDevices,
                 sessionStartAt: practiceState.currentSession?.startAt,
+                totalPreviousSeconds: totalPracticeSeconds,
                 onTap: () => _navigateToMidiStats(context),
               ),
           ],
@@ -254,12 +264,14 @@ class _MidiStatusChip extends StatefulWidget {
   final bool isPlaying;
   final List<String> devices;
   final DateTime? sessionStartAt;
+  final int totalPreviousSeconds;
   final VoidCallback onTap;
 
   const _MidiStatusChip({
     required this.isPlaying,
     required this.devices,
     this.sessionStartAt,
+    this.totalPreviousSeconds = 0,
     required this.onTap,
   });
 
@@ -307,7 +319,7 @@ class _MidiStatusChipState extends State<_MidiStatusChip> {
   @override
   Widget build(BuildContext context) {
     final label = widget.isPlaying
-        ? '練習中 ${_formatElapsed(widget.sessionStartAt)}'
+        ? '練習中 ${_formatTotalElapsed(widget.sessionStartAt, widget.totalPreviousSeconds)}'
         : widget.devices.isNotEmpty
             ? widget.devices.first
             : 'MIDI';
@@ -352,12 +364,14 @@ class _MidiStatusChipState extends State<_MidiStatusChip> {
   }
 }
 
-String _formatElapsed(DateTime? startAt) {
-  if (startAt == null) return '0:00';
-  final elapsed = DateTime.now().difference(startAt);
-  final h = elapsed.inHours;
-  final m = elapsed.inMinutes.remainder(60);
-  final s = elapsed.inSeconds.remainder(60);
+String _formatTotalElapsed(DateTime? startAt, int totalPreviousSeconds) {
+  final currentSec = startAt != null
+      ? DateTime.now().difference(startAt).inSeconds
+      : 0;
+  final total = totalPreviousSeconds + currentSec;
+  final h = total ~/ 3600;
+  final m = (total % 3600) ~/ 60;
+  final s = total % 60;
   if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   return '$m:${s.toString().padLeft(2, '0')}';
 }
