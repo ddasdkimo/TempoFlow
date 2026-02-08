@@ -19,8 +19,10 @@ void main() async {
   final usageService = container.read(usageTrackingServiceProvider);
   await usageService.initialize();
 
+  // Initialize MIDI practice service in background (requestMIDIAccess
+  // may show a browser permission dialog, so we must not block runApp).
   final practiceService = container.read(practiceTrackingServiceProvider);
-  await practiceService.initialize();
+  practiceService.initialize();
 
   runApp(
     UncontrolledProviderScope(
