@@ -91,7 +91,9 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             Expanded(
               child: LayoutBuilder(
@@ -197,6 +199,16 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
                 sessionStartAt: practiceState.currentSession?.startAt,
                 onTap: () => _navigateToMidiStats(context),
               ),
+          ],
+            ),
+            const Positioned(
+              left: 8,
+              bottom: 4,
+              child: Text(
+                'v1.1.0',
+                style: TextStyle(fontSize: 10, color: Colors.white24),
+              ),
+            ),
           ],
         ),
       ),
