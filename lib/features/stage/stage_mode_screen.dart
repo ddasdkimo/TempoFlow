@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +41,18 @@ class _StageModeScreenState extends ConsumerState<StageModeScreen> {
     final asyncState = ref.watch(metronomeStateProvider);
     final state = asyncState.valueOrNull ?? service.state;
     final primary = StageTheme.accentColor;
+
+    // MIDI practice state
+    final practiceService = ref.watch(practiceTrackingServiceProvider);
+    final practiceAsync = ref.watch(practiceTrackingStateProvider);
+    final practiceState = practiceAsync.valueOrNull ?? practiceService.state;
+    final practiceRepo = ref.watch(practiceRepositoryProvider);
+    final usageState = ref.watch(usageTrackingStateProvider).valueOrNull ??
+        ref.watch(usageTrackingServiceProvider).state;
+    final activeUserId = usageState.activeUser?.id;
+    final totalPracticeSeconds = activeUserId != null
+        ? practiceRepo.totalSecondsForUser(activeUserId)
+        : 0;
 
     return Scaffold(
       backgroundColor: StageTheme.backgroundColor,
@@ -136,6 +150,19 @@ class _StageModeScreenState extends ConsumerState<StageModeScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
+              // MIDI practice timer
+              if (practiceState.isPlaying)
+                Positioned(
+                  top: 12,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: _StagePracticeTimer(
+                      sessionStartAt: practiceState.currentSession?.startAt,
+                      totalPreviousSeconds: totalPracticeSeconds,
+                    ),
+                  ),
+                ),
               // BPM adjust buttons
               Positioned(
                 right: 16,
@@ -159,6 +186,60 @@ class _StageModeScreenState extends ConsumerState<StageModeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StagePracticeTimer extends StatefulWidget {
+  final DateTime? sessionStartAt;
+  final int totalPreviousSeconds;
+
+  const _StagePracticeTimer({
+    this.sessionStartAt,
+    this.totalPreviousSeconds = 0,
+  });
+
+  @override
+  State<_StagePracticeTimer> createState() => _StagePracticeTimerState();
+}
+
+class _StagePracticeTimerState extends State<_StagePracticeTimer> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentSec = widget.sessionStartAt != null
+        ? DateTime.now().difference(widget.sessionStartAt!).inSeconds
+        : 0;
+    final total = widget.totalPreviousSeconds + currentSec;
+    final h = total ~/ 3600;
+    final m = (total % 3600) ~/ 60;
+    final s = total % 60;
+    final timeStr = h > 0
+        ? '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+        : '$m:${s.toString().padLeft(2, '0')}';
+
+    return Text(
+      '練習中 $timeStr',
+      style: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFFB388FF),
       ),
     );
   }

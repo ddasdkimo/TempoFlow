@@ -215,7 +215,7 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
               left: 8,
               bottom: 4,
               child: Text(
-                'v1.1.1',
+                'v1.2.0',
                 style: TextStyle(fontSize: 10, color: Colors.white24),
               ),
             ),
