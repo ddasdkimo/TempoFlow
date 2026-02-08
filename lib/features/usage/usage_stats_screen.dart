@@ -40,25 +40,12 @@ class _UsageStatsScreenState extends ConsumerState<UsageStatsScreen>
     final state = asyncState.valueOrNull ?? service.state;
 
     final activeUser = state.activeUser;
-    if (activeUser == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('使用統計'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: const Center(
-          child: Text(
-            '請先選擇使用者',
-            style: TextStyle(fontSize: 16, color: Colors.white54),
-          ),
-        ),
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${activeUser.displayName} 的統計'),
+        title: Text(activeUser != null
+            ? '${activeUser.displayName} 的統計'
+            : '統計'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
@@ -75,8 +62,12 @@ class _UsageStatsScreenState extends ConsumerState<UsageStatsScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _UsageTimeTab(userId: activeUser.id),
-          _MidiPracticeTab(userId: activeUser.id),
+          activeUser != null
+              ? _UsageTimeTab(userId: activeUser.id)
+              : const _NoUserPlaceholder(),
+          activeUser != null
+              ? _MidiPracticeTab(userId: activeUser.id)
+              : const _MidiNoUserTab(),
         ],
       ),
     );
@@ -462,6 +453,70 @@ class _MidiPracticeTab extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+// =============================================================================
+// No-user placeholders
+// =============================================================================
+
+class _NoUserPlaceholder extends StatelessWidget {
+  const _NoUserPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        '請先選擇使用者',
+        style: TextStyle(fontSize: 16, color: Colors.white54),
+      ),
+    );
+  }
+}
+
+class _MidiNoUserTab extends ConsumerWidget {
+  const _MidiNoUserTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final practiceService = ref.watch(practiceTrackingServiceProvider);
+    final asyncState = ref.watch(practiceTrackingStateProvider);
+    final state = asyncState.valueOrNull ?? practiceService.state;
+
+    if (state.connectionState == MidiConnectionState.unsupported) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.music_off, size: 64, color: Colors.white24),
+            SizedBox(height: 16),
+            Text(
+              '此瀏覽器不支援 Web MIDI',
+              style: TextStyle(fontSize: 18, color: Colors.white54),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '請使用 Chrome 或 Edge 瀏覽器',
+              style: TextStyle(fontSize: 14, color: Colors.white38),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _MidiConnectionStatus(state: state),
+        const SizedBox(height: 32),
+        const Center(
+          child: Text(
+            '請先選擇使用者以開始記錄練習',
+            style: TextStyle(fontSize: 16, color: Colors.white54),
+          ),
+        ),
+      ],
+    );
   }
 }
 
