@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -285,45 +287,9 @@ class _MidiPracticeTab extends ConsumerWidget {
           value: _formatDuration(totalSeconds),
         ),
         // Currently playing indicator
-        if (state.isPlaying) ...[
+        if (state.isPlaying && state.currentSession != null) ...[
           const SizedBox(height: 12),
-          Card(
-            color: const Color(0xFF7C4DFF).withValues(alpha: 0.15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(
-                color: Color(0xFF7C4DFF),
-                width: 1,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 14,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF7C4DFF),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    '練習中…',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF7C4DFF),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _LiveSessionCard(startAt: state.currentSession!.startAt),
         ],
         const SizedBox(height: 16),
         // Export button
@@ -560,6 +526,82 @@ class _MidiNoUserTab extends ConsumerWidget {
 // =============================================================================
 // Shared widgets
 // =============================================================================
+
+class _LiveSessionCard extends StatefulWidget {
+  final DateTime startAt;
+  const _LiveSessionCard({required this.startAt});
+
+  @override
+  State<_LiveSessionCard> createState() => _LiveSessionCardState();
+}
+
+class _LiveSessionCardState extends State<_LiveSessionCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatElapsed(DateTime startAt) {
+    final elapsed = DateTime.now().difference(startAt);
+    final h = elapsed.inHours;
+    final m = elapsed.inMinutes.remainder(60);
+    final s = elapsed.inSeconds.remainder(60);
+    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xFF7C4DFF).withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(
+          color: Color(0xFF7C4DFF),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Color(0xFF7C4DFF),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '練習中 — ${_formatElapsed(widget.startAt)}',
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF7C4DFF),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _MidiConnectionStatus extends StatelessWidget {
   final dynamic state;

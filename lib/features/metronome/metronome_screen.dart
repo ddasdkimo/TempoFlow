@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -192,6 +194,7 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
               _MidiStatusChip(
                 isPlaying: practiceState.isPlaying,
                 devices: practiceState.connectedDevices,
+                sessionStartAt: practiceState.currentSession?.startAt,
                 onTap: () => _navigateToMidiStats(context),
               ),
           ],
@@ -235,30 +238,73 @@ class _MetronomeScreenState extends ConsumerState<MetronomeScreen> {
   }
 }
 
-class _MidiStatusChip extends StatelessWidget {
+class _MidiStatusChip extends StatefulWidget {
   final bool isPlaying;
   final List<String> devices;
+  final DateTime? sessionStartAt;
   final VoidCallback onTap;
 
   const _MidiStatusChip({
     required this.isPlaying,
     required this.devices,
+    this.sessionStartAt,
     required this.onTap,
   });
 
   @override
+  State<_MidiStatusChip> createState() => _MidiStatusChipState();
+}
+
+class _MidiStatusChipState extends State<_MidiStatusChip> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isPlaying) _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MidiStatusChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying && !oldWidget.isPlaying) {
+      _startTimer();
+    } else if (!widget.isPlaying && oldWidget.isPlaying) {
+      _stopTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopTimer();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {});
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final label = isPlaying
-        ? '練習中'
-        : devices.isNotEmpty
-            ? devices.first
+    final label = widget.isPlaying
+        ? '練習中 ${_formatElapsed(widget.sessionStartAt)}'
+        : widget.devices.isNotEmpty
+            ? widget.devices.first
             : 'MIDI';
-    final color = isPlaying
+    final color = widget.isPlaying
         ? const Color(0xFF7C4DFF)
         : const Color(0xFF66BB6A);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -276,7 +322,7 @@ class _MidiStatusChip extends StatelessWidget {
               label,
               style: TextStyle(fontSize: 12, color: color),
             ),
-            if (isPlaying) ...[
+            if (widget.isPlaying) ...[
               const SizedBox(width: 6),
               Container(
                 width: 6,
@@ -292,6 +338,16 @@ class _MidiStatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatElapsed(DateTime? startAt) {
+  if (startAt == null) return '0:00';
+  final elapsed = DateTime.now().difference(startAt);
+  final h = elapsed.inHours;
+  final m = elapsed.inMinutes.remainder(60);
+  final s = elapsed.inSeconds.remainder(60);
+  if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  return '$m:${s.toString().padLeft(2, '0')}';
 }
 
 class _PlayButton extends StatelessWidget {
