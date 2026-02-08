@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/midi/midi_service.dart';
 import '../../core/providers/providers.dart';
+import 'user_picker_screen.dart';
 
 class UsageStatsScreen extends ConsumerStatefulWidget {
   final int initialTab;
@@ -465,10 +466,29 @@ class _NoUserPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        '請先選擇使用者',
-        style: TextStyle(fontSize: 16, color: Colors.white54),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.person_outline, size: 64, color: Colors.white24),
+          const SizedBox(height: 16),
+          const Text(
+            '請先選擇使用者',
+            style: TextStyle(fontSize: 16, color: Colors.white54),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            icon: const Icon(Icons.person_add, size: 18),
+            label: const Text('選擇使用者'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B35),
+            ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UserPickerScreen()),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -509,10 +529,27 @@ class _MidiNoUserTab extends ConsumerWidget {
       children: [
         _MidiConnectionStatus(state: state),
         const SizedBox(height: 32),
-        const Center(
-          child: Text(
-            '請先選擇使用者以開始記錄練習',
-            style: TextStyle(fontSize: 16, color: Colors.white54),
+        Center(
+          child: Column(
+            children: [
+              const Text(
+                '請先選擇使用者以開始記錄練習',
+                style: TextStyle(fontSize: 16, color: Colors.white54),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                icon: const Icon(Icons.person_add, size: 18),
+                label: const Text('選擇使用者'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B35),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const UserPickerScreen()),
+                ),
+              ),
+            ],
           ),
         ),
       ],
