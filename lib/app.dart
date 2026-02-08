@@ -29,13 +29,16 @@ class _TempoFlowAppState extends ConsumerState<TempoFlowApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final usageService = ref.read(usageTrackingServiceProvider);
+    final practiceService = ref.read(practiceTrackingServiceProvider);
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
         usageService.onAppPaused();
+        practiceService.onAppPaused();
         break;
       case AppLifecycleState.resumed:
         usageService.onAppResumed();
+        practiceService.onAppResumed();
         break;
       default:
         break;

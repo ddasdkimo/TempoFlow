@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../midi/midi_service.dart';
+import '../midi/midi_service_factory.dart';
 import '../services/metronome_service.dart';
+import '../services/practice_repository.dart';
+import '../services/practice_tracking_service.dart';
 import '../services/preset_service.dart';
 import '../services/tap_tempo_service.dart';
 import '../services/speed_trainer_service.dart';
@@ -45,5 +49,33 @@ final usageTrackingServiceProvider = Provider<UsageTrackingService>((ref) {
 
 final usageTrackingStateProvider = StreamProvider<UsageTrackingState>((ref) {
   final service = ref.watch(usageTrackingServiceProvider);
+  return service.stateStream;
+});
+
+// MIDI practice tracking providers
+final midiServiceProvider = Provider<MidiService>((ref) {
+  final service = createPlatformMidiService();
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
+final practiceRepositoryProvider = Provider<PracticeRepository>((ref) {
+  return PracticeRepository();
+});
+
+final practiceTrackingServiceProvider =
+    Provider<PracticeTrackingService>((ref) {
+  final repository = ref.watch(practiceRepositoryProvider);
+  final midiService = ref.watch(midiServiceProvider);
+  final usageRepository = ref.watch(usageRepositoryProvider);
+  final service =
+      PracticeTrackingService(repository, midiService, usageRepository);
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
+final practiceTrackingStateProvider =
+    StreamProvider<PracticeTrackingState>((ref) {
+  final service = ref.watch(practiceTrackingServiceProvider);
   return service.stateStream;
 });

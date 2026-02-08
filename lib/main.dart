@@ -19,6 +19,9 @@ void main() async {
   final usageService = container.read(usageTrackingServiceProvider);
   await usageService.initialize();
 
+  final practiceService = container.read(practiceTrackingServiceProvider);
+  await practiceService.initialize();
+
   runApp(
     UncontrolledProviderScope(
       container: container,
